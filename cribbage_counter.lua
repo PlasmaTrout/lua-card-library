@@ -29,6 +29,60 @@ function cribbage_counter.countPairs(hand)
 	return scores
 end
 
+function cribbage_counter.countRuns(hand,scores)
+	local tree = {}
+	local scores = scores
+
+	for k,v in pairs(hand) do
+		local int = tonumber(v:getOrder())
+		if(tree[int] == nil) then
+			tree[int] = {}
+		end
+		table.insert(tree[int],v)
+	end
+
+	local sequenceCount = 1
+
+	for i = 1,13 do
+		local currentValue = tree[i]
+		local forwardValue = tree[i+1]
+		
+		if(currentValue ~= nil) then
+			if(forwardValue ~= nil) then
+				--print("sequence "..sequenceCount)
+				sequenceCount = sequenceCount + 1
+			else
+				if(sequenceCount > 2) then
+					--print("score!! "..sequenceCount)
+					local scoringHand = {}
+					local index = sequenceCount - 1
+					local cardCount = 1
+
+					for x = index,i do
+						cardCount = cardCount*#tree[x]
+						for y = 1,#tree[x] do	
+							table.insert( scoringHand, tree[x][y] )
+						end
+					end
+
+					local score = ScoreItem:new("run",sequenceCount*cardCount,scoringHand)
+					table.insert( scores, score )
+					
+					sequenceCount = 0
+				else
+					--print("run was broken at "..sequenceCount)
+					sequenceCount = 0
+				end
+			end
+		end
+		
+	end
+
+
+	return scores
+
+end
+
 function cribbage_counter.countFifteens(hand,scores)
 	
 	for k,v in ipairs( permutations ) do
