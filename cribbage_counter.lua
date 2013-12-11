@@ -4,7 +4,7 @@ require "score_item"
 local permutations = {
 	{ 1,2 },{ 1,3 },{ 1,4 },{ 1,5 },{ 2,3 },{ 2,4 },{ 2,5 },{ 3,4 },{ 3,5 },{ 4,5 },
 	{ 1,2,3 },{ 1,2,4 },{ 1,2,5 },{ 1,3,4 },{ 1,3,5 },{ 2,3,4 },{ 2,3,5 },{ 2,4,5 },{ 3,4,5 },
-	{ 1,2,3,4 }, { 1,2,3,5 },{ 1,3,4,5 },{ 2,3,4,5 }
+	{ 1,2,3,4 }, { 1,2,3,5 },{ 1,3,4,5 },{ 1,2,4,5 },{ 2,3,4,5 }
 }
 
 function cribbage_counter.countPairs(hand)
@@ -40,7 +40,7 @@ function cribbage_counter.countFlush(hand,scores)
 	end
 
 	for k,v in pairs(suits) do
-		if (#v > 2) then
+		if (#v > 3) then
 			local score = ScoreItem:new("flush",#v,v)
 			table.insert( scores, score )
 		end
@@ -73,17 +73,18 @@ function cribbage_counter.countRuns(hand,scores)
 		if(currentValue ~= nil) then
 			-- If we have a value in front of us we have a new run sequence
 			if(forwardValue ~= nil) then
+				--print(i.." "..sequenceCount)
 				sequenceCount = sequenceCount + 1
 			else
 				-- if more than 2 cards have been counted in order, we have a run
 				if(sequenceCount > 2) then
 					
 					local scoringHand = {}
-					local index = sequenceCount - 1
+					local index = sequenceCount-1
 					local cardCount = 1
-
+					--print("scoring sequence is "..sequenceCount.." index is "..index)
 					-- for each card in the run
-					for x = index,i do
+					for x = i-index,i do
 						cardCount = cardCount*#tree[x]
 						-- for each duplicated card in the run
 						for y = 1,#tree[x] do	
@@ -94,10 +95,9 @@ function cribbage_counter.countRuns(hand,scores)
 					local score = ScoreItem:new("run",sequenceCount*cardCount,scoringHand)
 					table.insert( scores, score )
 					
-					sequenceCount = 0
+					sequenceCount = 1
 				else
-					--print("run was broken at "..sequenceCount)
-					sequenceCount = 0
+					sequenceCount = 1
 				end
 			end
 		end
@@ -123,8 +123,6 @@ function cribbage_counter.countFifteens(hand,scores)
 			local score = ScoreItem:new("fifteen",2,cards)
 			table.insert(scores,score)
 		end
-		
-		--print(total)
 	end
 
 	return scores
@@ -148,7 +146,7 @@ function cribbage_counter.scoreHand(hand)
 		print(v:getTextualRep())
 		total=total + v.value
 		print("-----------------------")
-		
+
 	end
 	print(total .. " point hand")
 end
