@@ -29,10 +29,32 @@ function cribbage_counter.countPairs(hand)
 	return scores
 end
 
+function cribbage_counter.countFlush(hand,scores)
+	local suits = {}
+	local scores = scores
+	for k,v in pairs(hand) do
+		if(suits[v:getSuit()] == nil) then
+			suits[v:getSuit()] = {}
+		end
+		table.insert( suits[v:getSuit()], v )
+	end
+
+	for k,v in pairs(suits) do
+		if (#v > 2) then
+			local score = ScoreItem:new("flush",#v,v)
+			table.insert( scores, score )
+		end
+	end
+
+	return scores
+end
+
+
 function cribbage_counter.countRuns(hand,scores)
 	local tree = {}
 	local scores = scores
 
+	-- First create a new tree in numberical order and insert the cards that matched
 	for k,v in pairs(hand) do
 		local int = tonumber(v:getOrder())
 		if(tree[int] == nil) then
@@ -43,23 +65,27 @@ function cribbage_counter.countRuns(hand,scores)
 
 	local sequenceCount = 1
 
+	-- Then check for any cards that are in order by looking at the values
 	for i = 1,13 do
 		local currentValue = tree[i]
 		local forwardValue = tree[i+1]
 		
 		if(currentValue ~= nil) then
+			-- If we have a value in front of us we have a new run sequence
 			if(forwardValue ~= nil) then
-				--print("sequence "..sequenceCount)
 				sequenceCount = sequenceCount + 1
 			else
+				-- if more than 2 cards have been counted in order, we have a run
 				if(sequenceCount > 2) then
-					--print("score!! "..sequenceCount)
+					
 					local scoringHand = {}
 					local index = sequenceCount - 1
 					local cardCount = 1
 
+					-- for each card in the run
 					for x = index,i do
 						cardCount = cardCount*#tree[x]
+						-- for each duplicated card in the run
 						for y = 1,#tree[x] do	
 							table.insert( scoringHand, tree[x][y] )
 						end
@@ -102,6 +128,29 @@ function cribbage_counter.countFifteens(hand,scores)
 	end
 
 	return scores
+end
+
+function cribbage_counter.scoreHand(hand)
+
+	local deckmaker = require "deckmaker"
+	local c = deckmaker.generateKnownHand(hand)
+	for k,v in ipairs(c) do
+		print(v:getTextualRep())
+	end
+	print("")
+	local scores = cribbage_counter.countPairs(c)
+	local fifteens = cribbage_counter.countFifteens(c,scores)
+	local runs = cribbage_counter.countRuns(c,fifteens)
+	local flush = cribbage_counter.countFlush(c,runs)
+
+	local total = 0
+	for k,v in ipairs(runs) do
+		print(v:getTextualRep())
+		total=total + v.value
+		print("-----------------------")
+		
+	end
+	print(total .. " point hand")
 end
 
 
